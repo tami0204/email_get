@@ -1,0 +1,31 @@
+
+import re
+class DecodeProc:
+    #======================================================================================#
+    #  初期処理
+    #======================================================================================#    ##
+     def __init__(self):
+        # フォルダパスの設定
+        self.mojicode =  ['utf-8', 'shift_jis', 'cp932', 'euc_jp']
+    #======================================================================================#
+    #  ＺＩＰ文字化けを修正
+    #======================================================================================#    ##
+     def   decode_area(self,raw_area):
+        """
+        ZIPファイル内の文字化けしたファイル名を正しくデコードする。
+        """
+
+        for  src_enc  in  self.mojicode:
+             for  dct_enc  in  self.mojicode:
+                  try:
+                     decoded_name = raw_area.encode(src_enc).decode(dct_enc)
+                     cleaned_name = re.sub(r'[\\/:*?"<>|]', '', decoded_name)
+                     if cleaned_name and cleaned_name != "":
+                        return cleaned_name  # ← if で分岐せず、成功したら即 return
+                  except  Exception as e:
+                     print(f"文字変換エラー: {raw_area} → {e}")
+                     continue
+        
+        return  f"NTFND_{raw_area}"
+
+        
