@@ -13,6 +13,7 @@ import pikepdf
 import csv
 from email.utils import parseaddr
 import DecodeProc
+import GetDataFromToProc
 
 class PpapProcessor:
      def __init__(self, save_folder):
@@ -71,36 +72,9 @@ class PpapProcessor:
         """
         Tkinterを使って抽出期間を入力するフォームを表示する。
         """
-        def submit():
-            try:
-                start = datetime.strptime(self.entry_start.get(), "%Y%m%d")
-                end = datetime.strptime(self.entry_end.get(), "%Y%m%d") + timedelta(days=1) - timedelta(seconds=1)
+        class_trikomi = GetDataFromToProc()
+        self.filter_str = class_trikomi.get_dates_from_to()
 
-                self.date_from = start
-                self.date_to = end
-                start_str = self.date_from.strftime('%m/%d/%Y %H:%M %p')
-                end_str = self.date_to.strftime('%m/%d/%Y %H:%M %p')
-                self.filter_str = f"[ReceivedTime] >= '{start_str}' AND [ReceivedTime] <= '{end_str}'"
-
-                self.root.destroy()
-            except ValueError:
-                messagebox.showerror("入力エラー", "日付は YYYYMMDD 形式で入力してください。")
-
-        self.root = tk.Tk()
-        self.root.title("抽出期間の入力")
-        self.root.geometry("400x250")
-        font_large = ("Meiryo", 14)
-
-        tk.Label(self.root, text="開始日（YYYYMMDD）", font=font_large).pack(pady=10)
-        self.entry_start = tk.Entry(self.root, font=font_large, width=20)
-        self.entry_start.pack()
-
-        tk.Label(self.root, text="終了日（YYYYMMDD）", font=font_large).pack(pady=10)
-        self.entry_end = tk.Entry(self.root, font=font_large, width=20)
-        self.entry_end.pack()
-
-        tk.Button(self.root, text="実行", font=font_large, command=submit).pack(pady=20)
-        self.root.mainloop()
     #======================================================================================#
     #  処理対象のメールを抽出
     #======================================================================================#
@@ -110,6 +84,8 @@ class PpapProcessor:
         """
         outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
         inbox = outlook.GetDefaultFolder(6)
+        #---class 戻り値を使用
+        self.filter_str = f"[ReceivedTime] >= '{self.start_str}' AND [ReceivedTime] <= '{self.end_str}'"
         messages = inbox.Items.Restrict(self.filter_str)
         messages.Sort("[ReceivedTime]", False)
         self.virtual_area_2 = []
