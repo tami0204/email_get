@@ -12,20 +12,21 @@ import pytz
 import pikepdf
 import csv
 from email.utils import parseaddr
-import DecodeProc
-import GetDataFromToProc
-
+#import DecodeProc
+#import GetDataFromToProc
+from   Decode import DecodeProc
+from   GetDataFromTo import GetDataFromToProc
 class PpapProcessor:
      def __init__(self, save_folder):
-        # ƒtƒHƒ‹ƒ_ƒpƒX‚Ìİ’è
+        # ãƒ•ã‚©ãƒ«ãƒ€ãƒ‘ã‚¹ã®è¨­å®š
         self.save_folder = save_folder
-        self.pdf_unlocked_folder = os.path.join(save_folder, "‰ğœÏ")
-        self.zip_extracted_folder = os.path.join(save_folder, "‰ğ“€Ï")
-        self.normal_folder = os.path.join(save_folder, "ƒm[ƒ}ƒ‹")
-        self.mail_body_folder = os.path.join(save_folder, "ƒ[ƒ‹–{•¶")
-        self.gattai_folder = os.path.join(save_folder, "00_‡‘ÌƒtƒHƒ‹ƒ_")
+        self.pdf_unlocked_folder = os.path.join(save_folder, "è§£é™¤æ¸ˆ")
+        self.zip_extracted_folder = os.path.join(save_folder, "è§£å‡æ¸ˆ")
+        self.normal_folder = os.path.join(save_folder, "ãƒãƒ¼ãƒãƒ«")
+        self.mail_body_folder = os.path.join(save_folder, "ãƒ¡ãƒ¼ãƒ«æœ¬æ–‡")
+        self.gattai_folder = os.path.join(save_folder, "00_åˆä½“ãƒ•ã‚©ãƒ«ãƒ€")
 
-        # ƒtƒHƒ‹ƒ_‚Ì‘¶İƒ`ƒFƒbƒN‚Æì¬
+        # ãƒ•ã‚©ãƒ«ãƒ€ã®å­˜åœ¨ãƒã‚§ãƒƒã‚¯ã¨ä½œæˆ
         os.makedirs(self.save_folder, exist_ok=True)
         os.makedirs(self.pdf_unlocked_folder, exist_ok=True)
         os.makedirs(self.zip_extracted_folder, exist_ok=True)
@@ -33,7 +34,7 @@ class PpapProcessor:
         os.makedirs(self.mail_body_folder, exist_ok=True)
         os.makedirs(self.gattai_folder, exist_ok=True)
 
-        # ˆ—Œ‹‰ÊƒŠƒXƒg‚Ì‰Šú‰»
+        # å‡¦ç†çµæœãƒªã‚¹ãƒˆã®åˆæœŸåŒ–
         self.successful_operations = []
         self.failed_unlocks = []
         self.failed_extractions = []
@@ -42,21 +43,21 @@ class PpapProcessor:
         self.virtual_area_2 = []
         self.failed_unlocks=[]
 
-        # “ú•t“ü—ÍƒtƒH[ƒ€—p‚Ì•Ï”
+        # æ—¥ä»˜å…¥åŠ›ãƒ•ã‚©ãƒ¼ãƒ ç”¨ã®å¤‰æ•°
         self.root = None
         self.entry_start = None
         self.entry_end = None
         self.date_from = None
         self.date_to = None
-        #‚»‚Ì‘¼‰Šú‰»
-        self.read_pointer = 0  # © virtual_area_2‚ÌSTART-POINT ‘Š“–
+        #ãã®ä»–åˆæœŸåŒ–
+        self.read_pointer = 0  # â† virtual_area_2ã®START-POINT ç›¸å½“
     #======================================================================================#
-    #  ˆ—ŠîŠ²•”
+    #  å‡¦ç†åŸºå¹¹éƒ¨
     #======================================================================================#
      def run(self):
         """
-        ƒƒCƒ“‚Ìˆ—ƒtƒ[‚ğÀs‚·‚éƒƒ\ƒbƒh
-        """                                                                                                                         i5
+        ãƒ¡ã‚¤ãƒ³ã®å‡¦ç†ãƒ•ãƒ­ãƒ¼ã‚’å®Ÿè¡Œã™ã‚‹ãƒ¡ã‚½ãƒƒãƒ‰
+        """                                                                                                                         
         self._get_dates_from_form()
         self._process_emails()
         self.wk_eof =False
@@ -66,49 +67,52 @@ class PpapProcessor:
         self._create_summary_csv()
         self._create_gattai_folder()
     #======================================================================================#
-    #  ‘ÎÛ“ú•t‚ğ“ü—Í
+    #  å¯¾è±¡æ—¥ä»˜ã‚’å…¥åŠ›
     #======================================================================================#
      def _get_dates_from_form(self):
         """
-        Tkinter‚ğg‚Á‚Ä’ŠoŠúŠÔ‚ğ“ü—Í‚·‚éƒtƒH[ƒ€‚ğ•\¦‚·‚éB
+        Tkinterã‚’ä½¿ã£ã¦æŠ½å‡ºæœŸé–“ã‚’å…¥åŠ›ã™ã‚‹ãƒ•ã‚©ãƒ¼ãƒ ã‚’è¡¨ç¤ºã™ã‚‹ã€‚
         """
         class_trikomi = GetDataFromToProc()
-        self.filter_str = class_trikomi.get_dates_from_to()
-
+        filter = class_trikomi.get_dates_from_to()
+        self.filter_str=filter[0]
+        self.start_str=filter[1]
+        self.end_str=filter[2]
     #======================================================================================#
-    #  ˆ—‘ÎÛ‚Ìƒ[ƒ‹‚ğ’Šo
+    #  å‡¦ç†å¯¾è±¡ã®ãƒ¡ãƒ¼ãƒ«ã‚’æŠ½å‡º
     #======================================================================================#
      def _process_emails(self):
         """
-        ƒ[ƒ‹‚ğˆ—‚·‚éƒƒCƒ“‚Ìƒ‹[ƒv
+        ãƒ¡ãƒ¼ãƒ«ã‚’å‡¦ç†ã™ã‚‹ãƒ¡ã‚¤ãƒ³ã®ãƒ«ãƒ¼ãƒ—
         """
         outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
         inbox = outlook.GetDefaultFolder(6)
-        #---class –ß‚è’l‚ğg—p
-        self.filter_str = f"[ReceivedTime] >= '{self.start_str}' AND [ReceivedTime] <= '{self.end_str}'"
+        #---class æˆ»ã‚Šå€¤ã‚’ä½¿ç”¨ self.filter_str
+        #self.filter_str = f"[ReceivedTime] >= '{self.start_str}' AND [ReceivedTime] <= '{self.end_str}'"
+        self.filter_str =self.filter_str
         messages = inbox.Items.Restrict(self.filter_str)
         messages.Sort("[ReceivedTime]", False)
         self.virtual_area_2 = []
-    #--< ’Šoƒ[ƒ‹‚É‘Î‚µƒ[ƒhŒŸõ‚ğ‚µ‚Äi‚è‚İA‘ÎÛ‚Í‰¼‘zƒGƒŠƒA2‚Ö•ÛŠÇ
+    #--< æŠ½å‡ºãƒ¡ãƒ¼ãƒ«ã«å¯¾ã—ãƒ¯ãƒ¼ãƒ‰æ¤œç´¢ã‚’ã—ã¦çµã‚Šè¾¼ã¿ã€å¯¾è±¡ã¯ä»®æƒ³ã‚¨ãƒªã‚¢2ã¸ä¿ç®¡
         for message in messages:
             try:
                 if message.Class == 43:
                     subject = message.Subject or ""
-                    if any(keyword in subject for keyword in ["¿‹‘", "ƒpƒXƒ[ƒh", "ŠJ••ƒpƒXƒ[ƒh", "ˆÃ†", "Password", "PW"]):
+                    if any(keyword in subject for keyword in ["è«‹æ±‚æ›¸", "ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰", "é–‹å°ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰", "æš—å·", "Password", "PW"]):
                         self.male_naiyo_get(message, subject)
             except Exception as e:
-                print(f"‰¼‘z—Ìˆæ2’ŠoƒGƒ‰[: {e}")
+                print(f"ä»®æƒ³é ˜åŸŸ2æŠ½å‡ºã‚¨ãƒ©ãƒ¼: {e}")
 
-     #---<‰¼‘zƒGƒŠƒA2‚Ì~‡ƒ\[ƒg(reverse True ¨ ~‡/False ‚Ü‚½‚ÍÈ—ª ¨ ¸‡)
+     #---<ä»®æƒ³ã‚¨ãƒªã‚¢2ã®é™é †ã‚½ãƒ¼ãƒˆ(reverse True â†’ é™é †/False ã¾ãŸã¯çœç•¥ â†’ æ˜‡é †)
         self.virtual_area_2.sort(key=lambda x: x["received"], reverse=False)
     #======================================================================================#
-    #  –{ˆ—‚Ìåˆ—
+    #  æœ¬å‡¦ç†ã®ä¸»å‡¦ç†
     #======================================================================================#
-     def main_proc(self) :
-       #---<‰¼‘zƒGƒŠƒA2¨1ƒŒƒR[ƒh’PˆÊ‚Åæ“¾>
+     def _main_proc(self) :
+       #---<ä»®æƒ³ã‚¨ãƒªã‚¢2â†’1ãƒ¬ã‚³ãƒ¼ãƒ‰å˜ä½ã§å–å¾—>
         msg_data = self.tempfile_get()
 
-       #---<‰¼‘zƒGƒŠƒA2¨1ƒŒƒR[ƒh’PˆÊ‚Åæ“¾>
+       #---<ä»®æƒ³ã‚¨ãƒªã‚¢2â†’1ãƒ¬ã‚³ãƒ¼ãƒ‰å˜ä½ã§å–å¾—>
         if msg_data is None:
            self.wk_eof = True
            return
@@ -126,27 +130,27 @@ class PpapProcessor:
                     wk_pass_ari = self.tempfile_shubetsu(attachment)
                     if  wk_pass_ari:
                         self.password = self._find_best_password(self.sender, self.received, self.real_sender)
-                    if  self.password:
-                        self.tempfile_ari(attachment,wk_pass_ari)
-                    else:
-                        print(f"password get err! ¨ {attachment.filename}")
+                    # if  self.password:
+                    self.tempfile_ari(attachment,wk_pass_ari)
+                    # else:
+                    #     print(f"password get err! â†’ {attachment.filename}")
 
     #======================================================================================#
-    #  ‘ÎÛƒ[ƒ‹‚Ì«‘‰»
+    #  å¯¾è±¡ãƒ¡ãƒ¼ãƒ«ã®è¾æ›¸åŒ–
     #======================================================================================#
      def male_naiyo_get(self, message, subject):
-    # ’Êí‚Ì‘—MÒƒAƒhƒŒƒX
+    # é€šå¸¸ã®é€ä¿¡è€…ã‚¢ãƒ‰ãƒ¬ã‚¹
         snd_Email_Addr = message.SenderEmailAddress
 
-    # real_sender ‚ğ From ƒwƒbƒ_[‚©‚ç’ŠoiInternetMessageHeaders ‚ğg‚¤ê‡j
-        real_sender = snd_Email_Addr  # ‰Šú’l
+    # real_sender ã‚’ From ãƒ˜ãƒƒãƒ€ãƒ¼ã‹ã‚‰æŠ½å‡ºï¼ˆInternetMessageHeaders ã‚’ä½¿ã†å ´åˆï¼‰
+        real_sender = snd_Email_Addr  # åˆæœŸå€¤
 
         try:
-            # InternetMessageHeaders ‚©‚ç "From" ƒwƒbƒ_[‚ğ’T‚·
+            # InternetMessageHeaders ã‹ã‚‰ "From" ãƒ˜ãƒƒãƒ€ãƒ¼ã‚’æ¢ã™
             for header in message.InternetMessageHeaders:
                 if header.Name.lower() == "from":
                     from_value = header.Value
-                    # ŠpŠ‡ŒÊ‚©‚çƒ[ƒ‹ƒAƒhƒŒƒX‚ğ’Šo
+                    # è§’æ‹¬å¼§ã‹ã‚‰ãƒ¡ãƒ¼ãƒ«ã‚¢ãƒ‰ãƒ¬ã‚¹ã‚’æŠ½å‡º
                     import re
                     match = re.search(r'<([^>]+)>', from_value)
                 if match:
@@ -155,10 +159,10 @@ class PpapProcessor:
                     real_sender = from_value.strip()
                 break
         except Exception as e:
-        # ƒwƒbƒ_[‚ªæ“¾‚Å‚«‚È‚¢ê‡‚Í‚»‚Ì‚Ü‚Ü
+        # ãƒ˜ãƒƒãƒ€ãƒ¼ãŒå–å¾—ã§ããªã„å ´åˆã¯ãã®ã¾ã¾
             pass
 
-    # ƒf[ƒ^’Ç‰Á
+    # ãƒ‡ãƒ¼ã‚¿è¿½åŠ 
         self.virtual_area_2.append({
             "message": message,
             "sender": snd_Email_Addr,
@@ -182,14 +186,14 @@ class PpapProcessor:
      #            "attachments": message.attachments
      #        })
     #======================================================================================#
-    #  ‘ÎÛƒ[ƒ‹‚Ì«‘‰»¨1Œ’PˆÊ’Šo
+    #  å¯¾è±¡ãƒ¡ãƒ¼ãƒ«ã®è¾æ›¸åŒ–â†’1ä»¶å˜ä½æŠ½å‡º
     #======================================================================================#
      def tempfile_get(self):
        if self.read_pointer >= len(self.virtual_area_2):
-           return None  # EOF ‘Š“–
+           return None  # EOF ç›¸å½“
        else:
            msg_data = self.virtual_area_2[self.read_pointer]
-           self.read_pointer += 1  # Ÿ‚ÌˆÊ’u‚Öi‚ß‚é
+           self.read_pointer += 1  # æ¬¡ã®ä½ç½®ã¸é€²ã‚ã‚‹
 
            self.sender = msg_data["sender"]
            self.real_sender = msg_data["real_sender"]
@@ -199,33 +203,33 @@ class PpapProcessor:
            self.subject = msg_data["subject"]
 
 
-           # “Y•tƒtƒ@ƒCƒ‹‚Ìˆ—
-           self.attachments = msg_data.get("attachments", [])   # "attachments"‚ª—L–³‚ğ”»’è‚µ‚ ‚ê‚Îİ’èA–³‚¯‚ê‚ÎNULL
-           self.attachment_items = []  # “Y•tƒtƒ@ƒCƒ‹‚ğŠi”[‚·‚éƒŠƒXƒg
+           # æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ã®å‡¦ç†
+           self.attachments = msg_data.get("attachments", [])   # "attachments"ãŒæœ‰ç„¡ã‚’åˆ¤å®šã—ã‚ã‚Œã°è¨­å®šã€ç„¡ã‘ã‚Œã°NULL
+           self.attachment_items = []  # æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ã‚’æ ¼ç´ã™ã‚‹ãƒªã‚¹ãƒˆ
            for attachment in self.attachments:
                self.attachment_items.append(attachment)
 
            return msg_data
     #======================================================================================#
-    #  “Y•tƒtƒ@ƒCƒ‹‚È‚µ‚Ì¿‹‘ƒ[ƒ‹
+    #  æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ãªã—ã®è«‹æ±‚æ›¸ãƒ¡ãƒ¼ãƒ«
     #======================================================================================#
      def tempfile_nashi(self):
             body = self.body
             subject = self.subject
             safe_subject = re.sub(r'[\\/:*?"<>|\t\n\r]', '', subject)
-            body_filename = f"–{•¶_{safe_subject}.txt"
+            body_filename = f"æœ¬æ–‡_{safe_subject}.txt"
             body_path = os.path.join(self.mail_body_folder, body_filename)
 
             urls = re.findall(r'https?://[a-zA-Z0-9\.\-/_%&?=#]+', body)
 
-            url_text = "\n\n--- ’Šo‚³‚ê‚½URL ---\n" + "\n".join(urls) if urls else ""
+            url_text = "\n\n--- æŠ½å‡ºã•ã‚ŒãŸURL ---\n" + "\n".join(urls) if urls else ""
             with open(body_path, "w", encoding="utf-8") as f:
                 f.write(body + url_text)
 
-            print(f"“Y•tƒtƒ@ƒCƒ‹‚È‚µ ¨ –{•¶‚ğ•Û‘¶: {body_path}")
-            self.successful_operations.append({"í•Ê": "–{•¶•Û‘¶", "filename": body_filename, "received": self.received, "urls": urls})
+            print(f"æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ãªã— â†’ æœ¬æ–‡ã‚’ä¿å­˜: {body_path}")
+            self.successful_operations.append({"ç¨®åˆ¥": "æœ¬æ–‡ä¿å­˜", "filename": body_filename, "received": self.received, "urls": urls})
     #======================================================================================#
-    #  “Y•tƒtƒ@ƒCƒ‹‚ ‚è‚Ì¿‹‘ƒ[ƒ‹_save
+    #  æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ã‚ã‚Šã®è«‹æ±‚æ›¸ãƒ¡ãƒ¼ãƒ«_save
     #======================================================================================#
      def tempfile_save(self, attachment):
      #----<tenpu file -> file saver
@@ -234,130 +238,130 @@ class PpapProcessor:
             attachment.SaveAsFile(self.file_path)
 
     #======================================================================================#
-    #  “Y•tƒtƒ@ƒCƒ‹‚ ‚è‚Ì¿‹‘ƒ[ƒ‹_file shubetu de yarukotowo waketa
+    #  æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ã‚ã‚Šã®è«‹æ±‚æ›¸ãƒ¡ãƒ¼ãƒ«_file shubetu de yarukotowo waketa
     #======================================================================================#
      def tempfile_shubetsu(self, attachment):
      #----<file shuruide check                                                                                                                              c
             if  self.filename.endswith(".pdf"):
-                wk_psw_ari = self.pdf_chk(attachment)
-                return wk_psw_ari
+                wk_pass_ari = self.pdf_chk(attachment)
+                return wk_pass_ari
             elif self.filename.endswith(".zip"):
-                wk_psw_ari = self.zip_chk(attachment)
-                return wk_psw_ari
-                else:
-
+                wk_pass_ari = self.zip_chk(attachment)
+                return wk_pass_ari
+                 
     #======================================================================================#
-    #  “Y•tƒtƒ@ƒCƒ‹‚ ‚è‚Ì¿‹‘ƒ[ƒ‹_check_pdf
+    #  æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ã‚ã‚Šã®è«‹æ±‚æ›¸ãƒ¡ãƒ¼ãƒ«_check_pdf
     #======================================================================================#
      def pdf_chk(self, attachment):
             try:
                    with pikepdf.open(self.file_path) as pdf:
-                   return False  # psw no
+                    return False  # psw no
             except pikepdf.PasswordError:
-                   return True  # ƒpƒXƒ[ƒh‚ ‚è
+                   return True  # ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰ã‚ã‚Š
             except Exception as e:
-                   print(f"PDFˆ—ƒGƒ‰[: {self.filename} ¨ {e}")
+                   print(f"PDFå‡¦ç†ã‚¨ãƒ©ãƒ¼: {self.filename} â†’ {e}")
                    return False  # psw no
-
     #======================================================================================#
-    #  “Y•tƒtƒ@ƒCƒ‹‚ ‚è‚Ì¿‹‘ƒ[ƒ‹_check_zip
+    #  æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ã‚ã‚Šã®è«‹æ±‚æ›¸ãƒ¡ãƒ¼ãƒ«_check_zip
     #======================================================================================#
      def zip_chk(self, attachment):
-             return True  # ƒpƒXƒ[ƒh‚ ‚è
+             return True  # ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰ã‚ã‚Š
 
     #======================================================================================#
-    #  “Y•tƒtƒ@ƒCƒ‹‚ ‚è‚Ì¿‹‘ƒ[ƒ‹
+    #  æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ã‚ã‚Šã®è«‹æ±‚æ›¸ãƒ¡ãƒ¼ãƒ«
     #======================================================================================#
-     def tempfile_ari(self, attachment,wk_pass_ari):
+     def tempfile_ari(self, attachment,wk_pass_ari):  filename naiyo!!!!!!!!!!!
             if self.filename.endswith(".pdf"):
               try:
-                     if  wk_psw_ari:
+                     if  wk_pass_ari:
                          self.pdf_psw_ari_shori_proc(attachment)
                      else:
                          self.pdf_shori_proc(attachment)
               except Exception as e:
-                      print(f"tempfile_ari: {self.filename} ¨ {e}")
+                      print(f"tempfile_ari: {self.filename} â†’ {e}")
 
             elif self.filename.endswith(".zip"):
                 if self.password:
                     if self._extract_zip_with_encoding(self.file_path, self.password):
-                        self.successful_operations.append({"í•Ê": "ZIP‰ğ“€¬Œ÷", "filename": self.filename, "received": self.received})
+                        self.successful_operations.append({"ç¨®åˆ¥": "ZIPè§£å‡æˆåŠŸ", "filename": self.filename, "received": self.received})
                     else:
                         self.failed_extractions.append({"filename": self.filename, "received": self.received})
                 else:
                         self.zip_psw_sonota_proc(attachment)
     #======================================================================================#
-    #  “Y•tƒtƒ@ƒCƒ‹‚Ì¿‹‘‚ª‚y‚h‚o‚Ìê‡Q‚o‚o‚`‚o“™ƒpƒXƒ[ƒh‚ª‘‚¢‚Ä‚ ‚éƒ[ƒ‹‚ğ“Á’è
+    #  æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ã®è«‹æ±‚æ›¸ãŒï¼ºï¼©ï¼°ã®å ´åˆï¼¿ï¼°ï¼°ï¼¡ï¼°ç­‰ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰ãŒæ›¸ã„ã¦ã‚ã‚‹ãƒ¡ãƒ¼ãƒ«ã‚’ç‰¹å®š
     #======================================================================================#
      def _find_best_password(self, sender, received_time, real_sender):
         """
-        óM“ú‚ªÅ‚à‹ß‚¢ƒ[ƒ‹‚©‚çƒpƒXƒ[ƒh‚ğŒŸõ‚·‚éB
+        å—ä¿¡æ—¥æ™‚ãŒæœ€ã‚‚è¿‘ã„ãƒ¡ãƒ¼ãƒ«ã‹ã‚‰ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰ã‚’æ¤œç´¢ã™ã‚‹ã€‚
         """
         best_msg = None
         min_diff = float('inf')
-        #---<ƒpƒXƒ[ƒh’Šo(–{‘Ìƒ[ƒ‹‚Í‘ÎÛŠO)
+        #---<ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰æŠ½å‡º(æœ¬ä½“ãƒ¡ãƒ¼ãƒ«ã¯å¯¾è±¡å¤–)
         for fbp_msg_data in self.virtual_area_2:
             body = fbp_msg_data["body"]
             received = fbp_msg_data["received"]
-            if not("ƒpƒXƒ[ƒh" in body or "ŠJ••ƒpƒXƒ[ƒh" in body):
+            if not("ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰" in body or "é–‹å°ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰" in body):
                continue
             diff = abs((received -received_time ).total_seconds())
+            if   diff  == 0:  #ï¼ºï¼©ï¼°æ·»ä»˜ãƒ¡ãƒ¼ãƒ«æœ¬ä½“ã¯èª­ã¿é£›ã°ã—
+                 continue
             if  diff < min_diff:
                 min_diff = diff
                 best_msg = fbp_msg_data
 
-        #---<ƒpƒXƒ[ƒh’Šo
+        #---<ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰æŠ½å‡º
         if received_time!= received:
             return self._extract_password(best_msg["body"]) if best_msg else None
     #======================================================================================#
-    #  “Y•tƒtƒ@ƒCƒ‹‚Ì¿‹‘‚ª‚y‚h‚o‚Ìê‡QÅ‘P‚ÌƒpƒXƒ[ƒh‚ğæ“¾
+    #  æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ã®è«‹æ±‚æ›¸ãŒï¼ºï¼©ï¼°ã®å ´åˆï¼¿æœ€å–„ã®ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰ã‚’å–å¾—
     #======================================================================================#
      def _extract_password(self, body):
         """
-        ƒ[ƒ‹–{•¶‚©‚çƒpƒXƒ[ƒh‚ç‚µ‚«•¶š—ñ‚ğ’Šo‚·‚éB
+        ãƒ¡ãƒ¼ãƒ«æœ¬æ–‡ã‹ã‚‰ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰ã‚‰ã—ãæ–‡å­—åˆ—ã‚’æŠ½å‡ºã™ã‚‹ã€‚
         """
-        keywords = ["ƒpƒXƒ[ƒh", "ŠJ••ƒpƒXƒ[ƒh", "ˆÃ†", "Password", "PW"]
+        keywords = ["ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰", "é–‹å°ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰", "æš—å·", "Password", "PW"]
         lines = body.splitlines()
         pattern = r"[A-Za-z0-9!@#\$%\^&\*\-_+=]{4,}"
 
-     #--<“¯ˆês‚ÌƒpƒXƒ[ƒh‹Lq>
+     #--<åŒä¸€è¡Œã®ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰è¨˜è¿°>
         for i, line in enumerate(lines):
             if any(keyword in line for keyword in keywords):
                candidate = lines[i].strip()
                match = re.findall(pattern, candidate)
                if match:
-                  return match[0]  # Å‰‚Ì‰p”š4•¶šˆÈã‚Ì‚Ü‚Æ‚Ü‚è‚ğ•Ô‚·
+                  return match[0]  # æœ€åˆã®è‹±æ•°å­—4æ–‡å­—ä»¥ä¸Šã®ã¾ã¨ã¾ã‚Šã‚’è¿”ã™
 
-     #--<“¯ˆêsˆÈŠO‚ÌƒpƒXƒ[ƒh‹Lq>
+     #--<åŒä¸€è¡Œä»¥å¤–ã®ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰è¨˜è¿°>
         for i, line in enumerate(lines):
             if any(keyword in line for keyword in keywords):
                 for j in range(max(0, i - 5), min(len(lines), i + 4)):
                     candidate = lines[j].strip()
-                    #pattern = rf"[A-Za-z0-9]{4,}"
-                    #pattern = r"\b[A-Za-z0-9]{4,}\b"
                     match = re.findall(pattern, candidate)
                     if match:
-                       return match[0]  # Å‰‚Ì‰p”š4•¶šˆÈã‚Ì‚Ü‚Æ‚Ü‚è‚ğ•Ô‚·
+                       return match[0]  # æœ€åˆã®è‹±æ•°å­—4æ–‡å­—ä»¥ä¸Šã®ã¾ã¨ã¾ã‚Šã‚’è¿”ã™
 
 
-     #---<ƒpƒXƒ[ƒh‚ªæ“¾‚Å‚«‚È‚¢
+     #---<ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰ãŒå–å¾—ã§ããªã„æ™‚
         return None
 
-
     #======================================================================================#
-    #  “Y•tƒtƒ@ƒCƒ‹‚Ì¿‹‘‚ª‚o‚c‚e‚Ìê‡
+    #  æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ã®è«‹æ±‚æ›¸ãŒï¼°ï¼¤ï¼¦ã®å ´åˆ
     #======================================================================================#
      def pdf_shori_proc(self,attachment):
 
        normal_path = os.path.join(self.normal_folder, attachment.filename)
        if not os.path.exists(normal_path):
-            self.pdf.save(normal_path)
-            print(f"PDFƒm[ƒ}ƒ‹•Û‘¶: {normal_path}")
-            self.successful_operations.append({"í•Ê": "PDFƒm[ƒ}ƒ‹•Û‘¶", "filename": attachment.filename, "received": self.received})
+           try:
+               self.pdf.save(normal_path)
+               print(f"PDFãƒãƒ¼ãƒãƒ«ä¿å­˜: {normal_path}")
+               self.successful_operations.append({"ç¨®åˆ¥": "PDFãƒãƒ¼ãƒãƒ«ä¿å­˜", "filename": attachment.filename, "received": self.received})
+           except Exception as e:
+               print(f"PDFnotä¿å­˜: {normal_path}â†’ {e}")
        else:
-            print(f"PDFƒm[ƒ}ƒ‹•Û‘¶ƒXƒLƒbƒv: {normal_path} ‚Í‚·‚Å‚É‘¶İ‚µ‚Ü‚·B")
+            print(f"PDFãƒãƒ¼ãƒãƒ«ä¿å­˜ã‚¹ã‚­ãƒƒãƒ—: {normal_path} ã¯ã™ã§ã«å­˜åœ¨ã—ã¾ã™ã€‚")
     #======================================================================================#
-    #  “Y•tƒtƒ@ƒCƒ‹‚Ì¿‹‘‚ª‚y‚h‚o‚Ìê‡Q‚y‚h‚oˆ—åˆ—
+    #  æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ã®è«‹æ±‚æ›¸ãŒï¼ºï¼©ï¼°ã®å ´åˆï¼¿ï¼ºï¼©ï¼°å‡¦ç†ä¸»å‡¦ç†
     #======================================================================================#
      def pdf_psw_ari_shori_proc(self,attachment):
 
@@ -365,68 +369,77 @@ class PpapProcessor:
             try:
                 self.kagi_proc(attachment)
             except Exception as e:
-                   print(f"PDF‰ğœ¸”s: {attachment.filename} ¨ {e}")
+                   print(f"PDFè§£é™¤å¤±æ•—: {attachment.filename} â†’ {e}")
                    self.failed_unlocks.append({"filename": attachment.filename, "received": self.received})
         else:
-            print(f"PDFƒpƒXƒ[ƒhˆá‚¢: {attachment.filename}")
+            print(f"PDFãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰é•ã„: {attachment.filename}")
             self.failed_unlocks.append({"filename": attachment.filename, "received": self.received})
 
     #======================================================================================#
-    #  “Y•tƒtƒ@ƒCƒ‹‚Ì¿‹‘‚ª‚y‚h‚o‚Ìê‡QŒ®‰ğœˆ—
+    #  æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ã®è«‹æ±‚æ›¸ãŒï¼ºï¼©ï¼°ã®å ´åˆï¼¿éµè§£é™¤å‡¦ç†
     #======================================================================================#
      def kagi_proc(self,attachment):
         with pikepdf.open(self.file_path, password=self.password) as pdf:
-
+             new_pdf = pikepdf.Pdf.new()   #ç©ºPDFã‚’ä½œæˆ
+             for page in pdf.pages:
+                new_pdf.pages.append(page)
+    #---<psw kaijyogo file hozon
         unlocked_path = os.path.join(self.pdf_unlocked_folder, "unlocked_" + attachment.FileName)
+        new_pdf.save(unlocked_path, linearize=True) #å…ˆé ­ã‚ˆã‚Šé †èª­ã¿ã€€linearize=True
+    #---<msg print
         if not os.path.exists(unlocked_path):
             pdf.save(unlocked_path)
-            print(f"PDF‰ğœ¬Œ÷: {unlocked_path}")
-            self.successful_operations.append({"í•Ê": "PDF‰ğœ¬Œ÷", "filename": attachment.filename, "received": self.received})
+            print(f"PDFè§£é™¤æˆåŠŸ: {unlocked_path}")
+            self.successful_operations.append({"ç¨®åˆ¥": "PDFè§£é™¤æˆåŠŸ", "filename": attachment.filename, "received": self.received})
         else:
-            print(f"PDF‰ğœ•Û‘¶ƒXƒLƒbƒv: {unlocked_path} ‚Í‚·‚Å‚É‘¶İ‚µ‚Ü‚·B")
+            print(f"PDFè§£é™¤ä¿å­˜ã‚¹ã‚­ãƒƒãƒ—: {unlocked_path} ã¯ã™ã§ã«å­˜åœ¨ã—ã¾ã™ã€‚")
 
     #======================================================================================#
-    #  “Y•tƒtƒ@ƒCƒ‹‚Ì¿‹‘‚ª‚y‚h‚o‚Ìê‡Q‰ğ“€ˆ—
+    #  æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ã®è«‹æ±‚æ›¸ãŒï¼ºï¼©ï¼°ã®å ´åˆï¼¿è§£å‡å‡¦ç†
     #======================================================================================#    ##
      def _extract_zip_with_encoding(self, zip_path, password):
         """
-        ƒpƒXƒ[ƒh•t‚«ZIPƒtƒ@ƒCƒ‹‚ğ‰ğ“€‚µA’†g‚ğ•Û‘¶‚·‚éB
+        ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰ä»˜ãZIPãƒ•ã‚¡ã‚¤ãƒ«ã‚’è§£å‡ã—ã€ä¸­èº«ã‚’ä¿å­˜ã™ã‚‹ã€‚
         """
+        filename = self.subject
         try:
             with zipfile.ZipFile(zip_path) as zf:
                 for info in zf.infolist():
                     if info.is_dir():
-                        continue  # ƒfƒBƒŒƒNƒgƒŠ‚ÍƒXƒLƒbƒv
+                        continue  # ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã¯ã‚¹ã‚­ãƒƒãƒ—
                     try:
                         filename = DecodeProc().decode_area(info.filename)
                     except Exception as e:
-                        filename = info.filename
+                        print(f"dec_not")
                     self._extract_zip_with_write_or_skip(zf, info, filename, password)
-            print(f"ZIP‰ğ“€¬Œ÷: {zip_path}")
+            print(f"ZIPè§£å‡æˆåŠŸ: {zip_path}")
 
             return True
         except Exception as e:
-            print(f"ZIP‰ğ“€¸”s: {zip_path} ¨ {e}")
+            print(f"ZIPè§£å‡å¤±æ•—: {zip_path} â†’ {e}")
             return False
     #======================================================================================#
-    #  “Y•tƒtƒ@ƒCƒ‹‚Ì¿‹‘‚ª‚y‚h‚o‚Ìê‡Q‰ğ“€ŒãA•Û‘¶or ‚ ‚ê‚ÎƒXƒ‹[åˆ—
+    #  æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ã®è«‹æ±‚æ›¸ãŒï¼ºï¼©ï¼°ã®å ´åˆï¼¿è§£å‡å¾Œã€ä¿å­˜or ã‚ã‚Œã°ã‚¹ãƒ«ãƒ¼ä¸»å‡¦ç†
     #======================================================================================#    ##
      def _extract_zip_with_write_or_skip(self, zf, info, filename, password):
 
-        # ƒpƒX‚©‚çƒtƒ@ƒCƒ‹–¼‚Ì‚İ‚ğ’ŠoA•¶š‰»‚¯‘Îˆ
-        dec_filename =DecodeProc().decode_area(os.path.basename(filename))
-        target_path = os.path.join(self.zip_extracted_folder, dec_filename)
+        # ãƒ‘ã‚¹ã‹ã‚‰ãƒ•ã‚¡ã‚¤ãƒ«åã®ã¿ã‚’æŠ½å‡ºã€æ–‡å­—åŒ–ã‘å¯¾å‡¦
+        if  filename is None or "NTFND" in filename:
+            filename = self.subject + ".pdf"
+        #else:
+        #    filename = info.filename
 
-        # ƒtƒ@ƒCƒ‹‚Ì‘¶İƒ`ƒFƒbƒN
+        target_path = os.path.join(self.zip_extracted_folder, filename)
+        # ãƒ•ã‚¡ã‚¤ãƒ«ã®å­˜åœ¨ãƒã‚§ãƒƒã‚¯
         if  os.path.exists(target_path):
-            print(f"ZIP‰ğ“€Ï‚İ‚Ì‚½‚ßƒXƒLƒbƒv: {target_path} ‚Í‚·‚Å‚É‘¶İ‚µ‚Ü‚·B")
+            print(f"ZIPè§£å‡æ¸ˆã¿ã®ãŸã‚ã‚¹ã‚­ãƒƒãƒ—: {target_path} ã¯ã™ã§ã«å­˜åœ¨ã—ã¾ã™ã€‚")
             return
 
-        # ƒtƒ@ƒCƒ‹•Û‘¶
+        # ãƒ•ã‚¡ã‚¤ãƒ«ä¿å­˜
         self.saver_copy_proc(zf,info,password,target_path)
 
     #======================================================================================#
-    #  “Y•tƒtƒ@ƒCƒ‹‚Ì¿‹‘‚ª‚y‚h‚o‚Ìê‡Q•Û‘¶ or ƒXƒ‹[
+    #  æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ã®è«‹æ±‚æ›¸ãŒï¼ºï¼©ï¼°ã®å ´åˆï¼¿ä¿å­˜ or ã‚¹ãƒ«ãƒ¼
     #======================================================================================#    ##
      def saver_copy_proc(self,zf,info,password,target_path):
 
@@ -434,52 +447,52 @@ class PpapProcessor:
                  with zf.open(info, pwd=bytes(password, 'utf-8')) as source:
                      with open(target_path, 'wb') as target:
                                shutil.copyfileobj(source, target)
-                     print(f"ZIP‰ğ“€¬Œ÷: {info.filename} ¨ {target_path}")
+                     print(f"ZIPè§£å‡æˆåŠŸ: {info.filename} â†’ {target_path}")
          except  Exception as e:
-                 print(f"ZIP“Ç‚İ‚İ¸”s: {info.filename} ¨ {e}")
+                 print(f"ZIPèª­ã¿è¾¼ã¿å¤±æ•—: {info.filename} â†’ {e}")
                  return    False
 
     ########################################################################################
      def zip_psw_sonota_proc(self,attachment):
         if self._extract_zip_with_encoding(self.file_path, "akkodis2025"):
-            self.successful_operations.append({"í•Ê": "ZIP‰ğ“€¬Œ÷", "filename": attachment.filename, "received": self.received})
+            self.successful_operations.append({"ç¨®åˆ¥": "ZIPè§£å‡æˆåŠŸ", "filename": attachment.filename, "received": self.received})
         else:
             ntfnd_filename = "NTFND_" + self.attachment.filename
             ntfnd_path = os.path.join(self.normal_folder, ntfnd_filename)
             if not os.path.exists(ntfnd_path):
                 shutil.move(self.file_path, ntfnd_path)
-                print(f"ZIPƒpƒXƒ[ƒh•s–¾ ¨ ƒm[ƒ}ƒ‹•Û‘¶: {ntfnd_path}")
+                print(f"ZIPãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰ä¸æ˜ â†’ ãƒãƒ¼ãƒãƒ«ä¿å­˜: {ntfnd_path}")
                 self.failed_extractions.append({"filename": ntfnd_filename, "received": self.received})
             else:
-                print(f"ZIPƒpƒXƒ[ƒh•s–¾ ¨ ƒm[ƒ}ƒ‹•Û‘¶ƒXƒLƒbƒv: {ntfnd_path} ‚Í‚·‚Å‚É‘¶İ‚µ‚Ü‚·B")
+                print(f"ZIPãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰ä¸æ˜ â†’ ãƒãƒ¼ãƒãƒ«ä¿å­˜ã‚¹ã‚­ãƒƒãƒ—: {ntfnd_path} ã¯ã™ã§ã«å­˜åœ¨ã—ã¾ã™ã€‚")
 
 
     ########################################################################################
      def _create_summary_csv(self):
         """
-        ˆ—Œ‹‰Ê‚ğCSVƒtƒ@ƒCƒ‹‚É•Û‘¶‚·‚éB
+        å‡¦ç†çµæœã‚’CSVãƒ•ã‚¡ã‚¤ãƒ«ã«ä¿å­˜ã™ã‚‹ã€‚
         """
-        summary_csv_path = os.path.join(self.save_folder, "ˆ—Œ‹‰Ê_summary.csv")
+        summary_csv_path = os.path.join(self.save_folder, "å‡¦ç†çµæœ_summary.csv")
         with open(summary_csv_path, mode='w', newline='', encoding='utf-8-sig') as file:
             writer = csv.writer(file)
-            writer.writerow(["í•Ê", "ƒtƒ@ƒCƒ‹–¼", "óM“úi“ú–{ŠÔj", "URL"])
+            writer.writerow(["ç¨®åˆ¥", "ãƒ•ã‚¡ã‚¤ãƒ«å", "å—ä¿¡æ—¥æ™‚ï¼ˆæ—¥æœ¬æ™‚é–“ï¼‰", "URL"])
 
             for item in self.successful_operations:
                 urls = ",".join(item.get("urls", []))
-                writer.writerow([item["í•Ê"], item["filename"], item["received"].strftime("%Y/%m/%d %H:%M"), urls])
+                writer.writerow([item["ç¨®åˆ¥"], item["filename"], item["received"].strftime("%Y/%m/%d %H:%M"), urls])
 
             for item in self.failed_unlocks:
-                writer.writerow(["šš‰ğœ¸”siPDFjšš", item["filename"], item["received"].strftime("%Y/%m/%d %H:%M"), ""])
+                writer.writerow(["â˜…â˜…è§£é™¤å¤±æ•—ï¼ˆPDFï¼‰â˜…â˜…", item["filename"], item["received"].strftime("%Y/%m/%d %H:%M"), ""])
             for item in self.failed_extractions:
-                writer.writerow(["šš‰ğ“€¸”siZIPjšš", item["filename"], item["received"].strftime("%Y/%m/%d %H:%M"), ""])
+                writer.writerow(["â˜…â˜…è§£å‡å¤±æ•—ï¼ˆZIPï¼‰â˜…â˜…", item["filename"], item["received"].strftime("%Y/%m/%d %H:%M"), ""])
             for item in self.scripted_pdfs:
-                writer.writerow(["ššƒXƒNƒŠƒvƒg•t‚«PDFšš", item["filename"], item["received"].strftime("%Y/%m/%d %H:%M"), ""])
+                writer.writerow(["â˜…â˜…ã‚¹ã‚¯ãƒªãƒ—ãƒˆä»˜ãPDFâ˜…â˜…", item["filename"], item["received"].strftime("%Y/%m/%d %H:%M"), ""])
 
-        print("ˆ—Œ‹‰Ê‚ğCSVƒtƒ@ƒCƒ‹‚É•Û‘¶‚µ‚Ü‚µ‚½: {}".format(summary_csv_path))
+        print("å‡¦ç†çµæœã‚’CSVãƒ•ã‚¡ã‚¤ãƒ«ã«ä¿å­˜ã—ã¾ã—ãŸ: {}".format(summary_csv_path))
     ########################################################################################
      def _create_gattai_folder(self):
         """
-        w’è‚³‚ê‚½ƒtƒHƒ‹ƒ_‚É‚ ‚é‚·‚×‚Ä‚ÌPDFƒtƒ@ƒCƒ‹‚ğ‡‘ÌƒtƒHƒ‹ƒ_‚ÉƒRƒs[‚·‚éB
+        æŒ‡å®šã•ã‚ŒãŸãƒ•ã‚©ãƒ«ãƒ€ã«ã‚ã‚‹ã™ã¹ã¦ã®PDFãƒ•ã‚¡ã‚¤ãƒ«ã‚’åˆä½“ãƒ•ã‚©ãƒ«ãƒ€ã«ã‚³ãƒ”ãƒ¼ã™ã‚‹ã€‚
         """
         folders_to_copy = [self.pdf_unlocked_folder, self.normal_folder, self.zip_extracted_folder]
 
@@ -490,11 +503,11 @@ class PpapProcessor:
                     dest_path = os.path.join(self.gattai_folder, filename)
                     if not os.path.exists(dest_path):
                         shutil.copy2(source_path, dest_path)
-                        print(f"ƒRƒs[: {source_path} -> {dest_path}")
+                        print(f"ã‚³ãƒ”ãƒ¼: {source_path} -> {dest_path}")
                     else:
-                        print(f"ƒXƒLƒbƒv: {dest_path} ‚Í‚·‚Å‚É‘¶İ‚µ‚Ü‚·B")
+                        print(f"ã‚¹ã‚­ãƒƒãƒ—: {dest_path} ã¯ã™ã§ã«å­˜åœ¨ã—ã¾ã™ã€‚")
 
-# --- ƒƒCƒ“ˆ—‚ÌŠJn ---
+# --- ãƒ¡ã‚¤ãƒ³å‡¦ç†ã®é–‹å§‹ ---
 if __name__ == '__main__':
-   processor = PpapProcessor(save_folder=r"C:\Users\016215\Desktop\ai_ocr\ƒ[ƒ‹")
+   processor = PpapProcessor(save_folder=r"C:\Users\016215\Desktop\ai_ocr\ãƒ¡ãƒ¼ãƒ«")
    processor.run()
