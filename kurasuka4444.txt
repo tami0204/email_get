@@ -51,6 +51,9 @@ class PpapProcessor:
         self.date_to = None
         #その他初期化
         self.read_pointer = 0  # ← virtual_area_2のSTART-POINT 相当
+        # class 生成
+        self.class_torikomi = GetDataFromToProc()
+        self.class_Decode = DecodeProc()
     #======================================================================================#
     #  処理基幹部
     #======================================================================================#
@@ -73,8 +76,7 @@ class PpapProcessor:
         """
         Tkinterを使って抽出期間を入力するフォームを表示する。
         """
-        class_trikomi = GetDataFromToProc()
-        filter = class_trikomi.get_dates_from_to()
+        filter = self.class_torikomi.get_dates_from_to()
         self.filter_str=filter[0]
         self.start_str=filter[1]
         self.end_str=filter[2]
@@ -407,7 +409,7 @@ class PpapProcessor:
                     if info.is_dir():
                         continue  # ディレクトリはスキップ
                     try:
-                        filename = DecodeProc().decode_area(info.filename)
+                        filename = self.class_Decode.decode_area(info.filename)
                     except Exception as e:
                         print(f"dec_not")
                     self._extract_zip_with_write_or_skip(zf, info, filename, password)
