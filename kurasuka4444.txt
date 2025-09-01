@@ -507,6 +507,16 @@ class PpapProcessor:
                         print(f"スキップ: {dest_path} はすでに存在します。")
 
 # --- メイン処理の開始 ---
+#if __name__ == '__main__':
+#   processor = PpapProcessor(save_folder=r"C:\Users\016215\Desktop\ai_ocr\メール")
+#   processor.run()
+
+
 if __name__ == '__main__':
-   processor = PpapProcessor(save_folder=r"C:\Users\016215\Desktop\ai_ocr\メール")
-   processor.run()
+
+   desktop_path = os.path.join(Path.home(), "Desktop", "ai_ocr", "メール")
+
+   os.makedirs(desktop_path, exist_ok=True)  # フォルダがなければ作成
+
+   processor = PpapProcessor(save_folder=desktop_path)
+    processor.run()
