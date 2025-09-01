@@ -4,38 +4,43 @@ import win32com.client
 import tkinter as tk
 from tkinter import messagebox
 from datetime import datetime, timedelta
-import DecodeProc
 
 class GetDataFromToProc:
      def __init__(self):
 
-   #----< ‰æ–Êì¬
+   #----< ç”»é¢ä½œæˆ
         self.root = tk.Tk()
-        self.root.title("’ŠoŠúŠÔ‚Ì“ü—Í")
-        self.root.geometry("400x250")
+        self.root.title("æŠ½å‡ºæœŸé–“ã®å…¥åŠ›")
+        self.root.geometry("500x250")
         font_large = ("Meiryo", 14)
-        #----<ŠJŽn“ú’è‹`
-        self.label_kaishibi = tk.Label(self.root, text="ŠJŽn“úiYYYYMMDDj", font=font_large)
+        tk.Label(self.root, text="").grid(row=1)
+        
+        #----<é–‹å§‹æ—¥å®šç¾©
+        tk.Label(self.root, text="").grid(row=1)
+        self.label_kaishibi = tk.Label(self.root, text="é–‹å§‹æ—¥ï¼ˆYYYYMMDDï¼‰", font=font_large)
         self.label_kaishibi.grid(row=2, column=1)
         self.entry_kaishibi = tk.Entry(self.root, font=font_large, width=20)
         self.entry_kaishibi.grid(row=2, column=2)
 
-        #----<I—¹“ú’è‹`
-        self.label_endbi = tk.Label(self.root, text="I—¹“úiYYYYMMDDj", font=font_large)
-        self.label_endbi.grid(row=3, column=1)
+        tk.Label(self.root, text="").grid(row=3)
+        #----<çµ‚äº†æ—¥å®šç¾©
+        self.label_endbi = tk.Label(self.root, text="çµ‚äº†æ—¥ï¼ˆYYYYMMDDï¼‰", font=font_large)
+        self.label_endbi.grid(row=4, column=1)
         self.entry_endbi = tk.Entry(self.root, font=font_large, width=20)
-        self.entry_endbi.grid(row=3, column=2)
-
-      #----< ŽÀsƒ{ƒ^ƒ“
-        self.button_execute = tk.Button(self.root, text="ŽÀs", font=font_large, command=self._submit)
-        self.button_execute.grid(row=4, column=1, columnspan=2, pady=20)
-        #tk.Button(self.root, text="ŽÀs", font=font_large, command=submit).pack(pady=20)
+        self.entry_endbi.grid(row=4, column=2)
+        
+        tk.Label(self.root, text="").grid(row=5)
+        tk.Label(self.root, text="").grid(row=6)
+      #----< å®Ÿè¡Œãƒœã‚¿ãƒ³
+        self.button_execute = tk.Button(self.root, text="å®Ÿè¡Œ", font=font_large, command=self._submit)
+        self.button_execute.grid(row=7, column=1, columnspan=2, pady=40)
+        #tk.Button(self.root, text="å®Ÿè¡Œ", font=font_large, command=submit).pack(pady=20)
 
      def _submit(self):
         try:
             self.start = datetime.strptime(self.entry_kaishibi.get(), "%Y%m%d")
             self.end = datetime.strptime(self.entry_endbi.get(), "%Y%m%d") + timedelta(days=1) - timedelta(seconds=1)
-            #---<Žž•ª•b‚ð‚Â‚¯‚é
+            #---<æ™‚åˆ†ç§’ã‚’ã¤ã‘ã‚‹
             self.date_from = self.start
             self.date_to = self.end
 
@@ -43,14 +48,15 @@ class GetDataFromToProc:
             self.end_str = self.date_to.strftime('%m/%d/%Y %H:%M %p')
             self.root.destroy()
         except ValueError:
-            messagebox.showerror("“ü—ÍƒGƒ‰[", "“ú•t‚Í YYYYMMDD Œ`Ž®‚Å“ü—Í‚µ‚Ä‚­‚¾‚³‚¢B")
+            messagebox.showerror("å…¥åŠ›ã‚¨ãƒ©ãƒ¼", "æ—¥ä»˜ã¯ YYYYMMDD å½¢å¼ã§å…¥åŠ›ã—ã¦ãã ã•ã„ã€‚")
 
     #======================================================================================#
-    #  ‘ÎÛ“ú•t‚ð“ü—Í
+    #  å¯¾è±¡æ—¥ä»˜ã‚’å…¥åŠ›
     #======================================================================================#
      def get_dates_from_to(self):
         """
-        Tkinter‚ðŽg‚Á‚Ä’ŠoŠúŠÔ‚ð“ü—Í‚·‚éƒtƒH[ƒ€‚ð•\Ž¦‚·‚éB
+        Tkinterã‚’ä½¿ã£ã¦æŠ½å‡ºæœŸé–“ã‚’å…¥åŠ›ã™ã‚‹ãƒ•ã‚©ãƒ¼ãƒ ã‚’è¡¨ç¤ºã™ã‚‹ã€‚
         """
         self.root.mainloop()
-        return f"[ReceivedTime] >= '{self.start_str}' AND [ReceivedTime] <= '{self.end_str}'"
+        return [f"[ReceivedTime] >= '{self.start_str}' AND [ReceivedTime] <= '{self.end_str}'",
+                self.start_str,self.end_str]
