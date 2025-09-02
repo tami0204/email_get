@@ -1,0 +1,46 @@
+﻿import re
+
+class DecodeProc:
+    #======================================================================================#
+    #  初期処理
+    #======================================================================================#
+     def __init__(self):
+        # フォルダパスの設定
+        self.mojicode =  ['utf-8', 'shift_jis', 'cp932', 'euc_jp']
+    #======================================================================================#
+    #  ＺＩＰ文字化けを修正
+    #======================================================================================#
+     def   decode_area(self,raw_area):
+        """
+        ZIPファイル内の文字化けしたファイル名を正しくデコードする。
+        """
+
+        for  src_enc  in  self.mojicode:
+             for  dct_enc  in  self.mojicode:
+                  try:
+                     
+                     decoded_name = raw_area.encode(src_enc).decode(dct_enc)
+                     cleaned_name = re.sub(r'[\\/:*?"<>|]', '', decoded_name)
+
+                     if is_garbled(decoded_name):
+                         continue
+                     if decoded_name and decoded_name != "":
+                        return cleaned_name  # ← if で分岐せず、成功したら即 return
+                  except  Exception as e:
+                     #print(f"文字変換エラー: {raw_area} → {e}")
+                     continue
+        
+        return  f"NTFND_{raw_area}"
+     
+def is_garbled(text):
+    # 文字化けによくある記号が多い場合は文字化けと判定
+        garbled_chars = [
+                        'π', 'Φ', 'µ', 'σ', '∩', '╝', 'â', 'ü', 'ö', 'è', 'ë', 'Ä', '«', '╨',
+                        'á', 'í', 'ó', 'ú', 'ñ', 'Ã', '©', '§', '±', '¢', '¥', '¤', '«', '»',
+                        '¿', '¡', '×', '÷', 'Ø', 'Þ', 'ß', 'æ', 'ø', 'þ', 'ð', 'ç', 'ª', 'º'
+    ]
+        count = sum(text.count(c) for c in garbled_chars)
+
+        if count > 3 :
+           return True  # 3文字以上文字あればもじばけとみなす
+        
