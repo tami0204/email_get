@@ -1,4 +1,4 @@
-import os
+﻿import os
 from typing import Self
 import win32com.client
 import tkinter as tk

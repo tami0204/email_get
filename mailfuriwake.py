@@ -1,3 +1,5 @@
+﻿from ast import Continue, Return
+from operator import truediv
 import os
 import re
 #from socket import send_fds
@@ -12,13 +14,10 @@ import pytz
 import pikepdf
 import csv
 from email.utils import parseaddr
-
-#import DecodeProc
-#import GetDataFromToProc
+from pathlib import Path
+#class
 from   Decode import DecodeProc
 from   GetDataFromTo import GetDataFromToProc
-
-
 class PpapProcessor:
      def __init__(self, save_folder):
         # フォルダパスの設定
@@ -54,13 +53,16 @@ class PpapProcessor:
         self.date_to = None
         #その他初期化
         self.read_pointer = 0  # ← virtual_area_2のSTART-POINT 相当
+        # class 生成
+        self.class_torikomi = GetDataFromToProc()
+        self.class_Decode = DecodeProc()
     #======================================================================================#
     #  処理基幹部
     #======================================================================================#
      def run(self):
         """
         メインの処理フローを実行するメソッド
-        """                                                                                                                         
+        """
         self._get_dates_from_form()
         self._process_emails()
         self.wk_eof =False
@@ -76,14 +78,10 @@ class PpapProcessor:
         """
         Tkinterを使って抽出期間を入力するフォームを表示する。
         """
-
-        class_trikomi = GetDataFromToProc()
-        filter = class_trikomi.get_dates_from_to()
+        filter = self.class_torikomi.get_dates_from_to()
         self.filter_str=filter[0]
         self.start_str=filter[1]
         self.end_str=filter[2]
-
-
     #======================================================================================#
     #  処理対象のメールを抽出
     #======================================================================================#
@@ -93,12 +91,8 @@ class PpapProcessor:
         """
         outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
         inbox = outlook.GetDefaultFolder(6)
-
         #---class 戻り値を使用 self.filter_str
-        #self.filter_str = f"[ReceivedTime] >= '{self.start_str}' AND [ReceivedTime] <= '{self.end_str}'"
         self.filter_str =self.filter_str
-
-
         messages = inbox.Items.Restrict(self.filter_str)
         messages.Sort("[ReceivedTime]", False)
         self.virtual_area_2 = []
@@ -114,36 +108,6 @@ class PpapProcessor:
 
      #---<仮想エリア2の降順ソート(reverse True → 降順/False または省略 → 昇順)
         self.virtual_area_2.sort(key=lambda x: x["received"], reverse=False)
-    #======================================================================================#
-    #  本処理の主処理
-    #======================================================================================#
-     def _main_proc(self) :
-       #---<仮想エリア2→1レコード単位で取得>
-        msg_data = self.tempfile_get()
-
-       #---<仮想エリア2→1レコード単位で取得>
-        if msg_data is None:
-           self.wk_eof = True
-           return
-
-        if len(msg_data["attachments"]) ==0 :
-           self.tempfile_nashi()
-        else:
-            self.password = None
-            wk_pass_ari =None
-            for attachment in msg_data["attachments"]:
-                if  self.password:
-                    self.tempfile_ari(attachment,wk_pass_ari)
-                else:
-                    self.tempfile_save(attachment)
-                    wk_pass_ari = self.tempfile_shubetsu(attachment)
-                    if  wk_pass_ari:
-                        self.password = self._find_best_password(self.sender, self.received, self.real_sender)
-                    # if  self.password:
-                    self.tempfile_ari(attachment,wk_pass_ari)
-                    # else:
-                    #     print(f"password get err! → {attachment.filename}")
-
     #======================================================================================#
     #  対象メールの辞書化
     #======================================================================================#
@@ -195,7 +159,38 @@ class PpapProcessor:
      #            "attachments": message.attachments
      #        })
     #======================================================================================#
-    #  対象メールの辞書化→1件単位抽出
+    #  本処理の主処理
+    #======================================================================================#
+     def _main_proc(self) :
+       #---<仮想エリア2→1レコード単位で取得>
+        has_data = self.tempfile_get()
+
+       #---<仮想エリア2→1レコード単位で取得>
+        if has_data is None:
+           self.wk_eof = True
+           return
+
+        if len(self.attachment_items) ==0 :
+           self.tempfile_nashi()
+        else:
+            self.password = None
+            wk_pass_ari =None
+            for attachment in  self.attachment_items:
+                if  self.password:
+                    self.tempfile_ari(attachment,wk_pass_ari)
+                else:
+                    self.tempfile_save(attachment)
+                    wk_pass_ari =None
+                    wk_pass_ari = self.tempfile_shubetsu(attachment)
+                    if  wk_pass_ari:
+                        self.password = self._find_best_password(self.sender, self.received, self.real_sender)
+                    # if  self.password:
+                    self.tempfile_ari(attachment,wk_pass_ari)
+                    # else:
+                    #     print(f"password get err! → {attachment.filename}")
+
+    #======================================================================================#
+    #  対象メールの辞書化→1件単位抽出     print(dir(attachment))
     #======================================================================================#
      def tempfile_get(self):
        if self.read_pointer >= len(self.virtual_area_2):
@@ -257,7 +252,7 @@ class PpapProcessor:
             elif self.filename.endswith(".zip"):
                 wk_pass_ari = self.zip_chk(attachment)
                 return wk_pass_ari
-                 
+
     #======================================================================================#
     #  添付ファイルありの請求書メール_check_pdf
     #======================================================================================#
@@ -279,7 +274,7 @@ class PpapProcessor:
     #======================================================================================#
     #  添付ファイルありの請求書メール
     #======================================================================================#
-     def tempfile_ari(self, attachment,wk_pass_ari):  filename naiyo!!!!!!!!!!!
+     def tempfile_ari(self, attachment,wk_pass_ari): 
             if self.filename.endswith(".pdf"):
               try:
                      if  wk_pass_ari:
@@ -290,14 +285,12 @@ class PpapProcessor:
                       print(f"tempfile_ari: {self.filename} → {e}")
 
             elif self.filename.endswith(".zip"):
-                if self.password:
-                    if self._extract_zip_with_encoding(self.file_path, self.password):
-                        self.successful_operations.append({"種別": "ZIP解凍成功", "filename": self.filename, "received": self.received})
-                    else:
-                        self.failed_extractions.append({"filename": self.filename, "received": self.received})
+                if self._extract_zip_with_encoding(self.file_path, self.password):
+                   self.successful_operations.append({"種別": "ZIP解凍成功", "filename": self.filename, "received": self.received})
                 else:
-                        self.zip_psw_sonota_proc(attachment)
-    #======================================================================================#
+                   self.failed_extractions.append({"filename": self.filename, "received": self.received})
+
+      #======================================================================================#
     #  添付ファイルの請求書がＺＩＰの場合＿ＰＰＡＰ等パスワードが書いてあるメールを特定
     #======================================================================================#
      def _find_best_password(self, sender, received_time, real_sender):
@@ -359,12 +352,16 @@ class PpapProcessor:
     #======================================================================================#
      def pdf_shori_proc(self,attachment):
 
-       normal_path = os.path.join(self.normal_folder, attachment.filename)
+       normal_path = os.path.join(self.normal_folder, attachment.Filename)
        if not os.path.exists(normal_path):
            try:
-               self.pdf.save(normal_path)
+               if not os.path.exists(self.file_path)  or  self.file_path is None:
+                  print(f"PDF元ファイルが存在しません: {self.file_path}")
+                  return
+               with pikepdf.open(self.file_path) as pdf:
+                    pdf.save(normal_path)
                print(f"PDFノーマル保存: {normal_path}")
-               self.successful_operations.append({"種別": "PDFノーマル保存", "filename": attachment.filename, "received": self.received})
+               self.successful_operations.append({"種別": "PDFノーマル保存", "filename": attachment.Filename, "received": self.received})
            except Exception as e:
                print(f"PDFnot保存: {normal_path}→ {e}")
        else:
@@ -393,7 +390,7 @@ class PpapProcessor:
              for page in pdf.pages:
                 new_pdf.pages.append(page)
     #---<psw kaijyogo file hozon
-        unlocked_path = os.path.join(self.pdf_unlocked_folder, "unlocked_" + attachment.FileName)
+        unlocked_path = os.path.join(self.pdf_unlocked_folder, "unlocked_" + attachment.fileName)
         new_pdf.save(unlocked_path, linearize=True) #先頭より順読み　linearize=True
     #---<msg print
         if not os.path.exists(unlocked_path):
@@ -417,7 +414,7 @@ class PpapProcessor:
                     if info.is_dir():
                         continue  # ディレクトリはスキップ
                     try:
-                        filename = DecodeProc().decode_area(info.filename)
+                        filename = self.class_Decode.decode_area(info.filename)
                     except Exception as e:
                         print(f"dec_not")
                     self._extract_zip_with_write_or_skip(zf, info, filename, password)
@@ -429,14 +426,14 @@ class PpapProcessor:
             return False
     #======================================================================================#
     #  添付ファイルの請求書がＺＩＰの場合＿解凍後、保存or あればスルー主処理
-    #======================================================================================#    ##
+    #======================================================================================#   
      def _extract_zip_with_write_or_skip(self, zf, info, filename, password):
 
         # パスからファイル名のみを抽出、文字化け対処
         if  filename is None or "NTFND" in filename:
-            filename = self.subject + ".pdf"
-        #else:
-        #    filename = info.filename
+            safe_subject = re.sub(r'[\\/:*?"<>|\t\n\r]', '', self.subject)
+            receved_srt = self.received.strftime("%Y%m%d_%H%M%S")                              
+            filename = f"{safe_subject}_{receved_srt}.pdf"
 
         target_path = os.path.join(self.zip_extracted_folder, filename)
         # ファイルの存在チェック
@@ -446,35 +443,38 @@ class PpapProcessor:
 
         # ファイル保存
         self.saver_copy_proc(zf,info,password,target_path)
-
     #======================================================================================#
     #  添付ファイルの請求書がＺＩＰの場合＿保存 or スルー
     #======================================================================================#    ##
      def saver_copy_proc(self,zf,info,password,target_path):
 
-         try:
+        addeco_status = self.adeco_pass_proc(zf,info,password,target_path)
+        if  addeco_status:
+            return
+
+        try:
                  with zf.open(info, pwd=bytes(password, 'utf-8')) as source:
                      with open(target_path, 'wb') as target:
                                shutil.copyfileobj(source, target)
                      print(f"ZIP解凍成功: {info.filename} → {target_path}")
-         except  Exception as e:
+        except  Exception as e:
                  print(f"ZIP読み込み失敗: {info.filename} → {e}")
                  return    False
 
-    ########################################################################################
-     def zip_psw_sonota_proc(self,attachment):
-        if self._extract_zip_with_encoding(self.file_path, "akkodis2025"):
-            self.successful_operations.append({"種別": "ZIP解凍成功", "filename": attachment.filename, "received": self.received})
-        else:
-            ntfnd_filename = "NTFND_" + self.attachment.filename
-            ntfnd_path = os.path.join(self.normal_folder, ntfnd_filename)
-            if not os.path.exists(ntfnd_path):
-                shutil.move(self.file_path, ntfnd_path)
-                print(f"ZIPパスワード不明 → ノーマル保存: {ntfnd_path}")
-                self.failed_extractions.append({"filename": ntfnd_filename, "received": self.received})
-            else:
-                print(f"ZIPパスワード不明 → ノーマル保存スキップ: {ntfnd_path} はすでに存在します。")
+    #======================================================================================#
+    #  添付ファイルの請求書がＺＩＰの場合＿adeco_tokushori
+    #======================================================================================#    ##
+     def adeco_pass_proc(self,zf,info,password,target_path):
 
+        try:
+               with zf.open(info, pwd=bytes("akkodis2025", 'utf-8')) as source:
+                    with open(target_path, 'wb') as target:
+                             shutil.copyfileobj(source, target)
+                    return  True
+        except Exception as e:
+               print(f"ZIP読み込み失敗: {info.filename} → {e}")
+               return    False
+                  
 
     ########################################################################################
      def _create_summary_csv(self):
@@ -518,5 +518,12 @@ class PpapProcessor:
 
 # --- メイン処理の開始 ---
 if __name__ == '__main__':
-   processor = PpapProcessor(save_folder=r"C:\Users\016215\Desktop\ai_ocr\メール")
-   processor.run()
+    home_dir = Path.home()
+    base_path = os.path.join(Path.home(), "Desktop", "ai_ocr", "メール")
+    current_time_str = datetime.now().strftime("%Y%m%d_%H%M")
+    dated_path = os.path.join(base_path, current_time_str)
+    os.makedirs(dated_path, exist_ok=True)
+
+    # 処理開始
+    processor = PpapProcessor(save_folder=dated_path)
+    processor.run()
