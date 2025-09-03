@@ -7,3 +7,5 @@ call ".\python_env\python.exe" -m pip install -r requirements.txt
 
 echo [INFO] 初期セットアップ完了
 pause
+REM pip導入用スクリプト（get-pip.py）は https://bootstrap.pypa.io/get-pip.py から取得し、
+REM 中身をコピーして python_env フォルダに保存しておくこと
