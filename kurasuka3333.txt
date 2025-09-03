@@ -12,10 +12,12 @@ import pytz
 import pikepdf
 import csv
 from email.utils import parseaddr
+
 #import DecodeProc
 #import GetDataFromToProc
 from   Decode import DecodeProc
 from   GetDataFromTo import GetDataFromToProc
+
 class PpapProcessor:
      def __init__(self, save_folder):
         # フォルダパスの設定
@@ -73,11 +75,13 @@ class PpapProcessor:
         """
         Tkinterを使って抽出期間を入力するフォームを表示する。
         """
+
         class_trikomi = GetDataFromToProc()
         filter = class_trikomi.get_dates_from_to()
         self.filter_str=filter[0]
         self.start_str=filter[1]
         self.end_str=filter[2]
+
     #======================================================================================#
     #  処理対象のメールを抽出
     #======================================================================================#
@@ -87,9 +91,11 @@ class PpapProcessor:
         """
         outlook = win32com.client.Dispatch("Outlook.Application").GetNamespace("MAPI")
         inbox = outlook.GetDefaultFolder(6)
+
         #---class 戻り値を使用 self.filter_str
         #self.filter_str = f"[ReceivedTime] >= '{self.start_str}' AND [ReceivedTime] <= '{self.end_str}'"
         self.filter_str =self.filter_str
+
         messages = inbox.Items.Restrict(self.filter_str)
         messages.Sort("[ReceivedTime]", False)
         self.virtual_area_2 = []
