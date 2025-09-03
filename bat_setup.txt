@@ -10,3 +10,4 @@ pause
 REM 初回1回のみ起動
 REM pip導入用スクリプト（get-pip.py）は https://bootstrap.pypa.io/get-pip.py から取得し、
 REM 中身をコピーして python_env フォルダに保存しておくこと
+REM 外部ライブラリをインストール
