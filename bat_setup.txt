@@ -1,1 +1,9 @@
-call python.exe -m pip install -r requirements.txt
+@echo off
+echo [INFO] pip を導入中...
+call ".\python_env\python.exe" get-pip.py
+
+echo [INFO] ライブラリをインストール中...
+call ".\python_env\python.exe" -m pip install -r requirements.txt
+
+echo [INFO] 初期セットアップ完了
+pause
