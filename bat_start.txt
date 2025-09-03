@@ -1,0 +1,5 @@
+@echo off
+echo [INFO] アプリケーションを起動中...
+call ".\python_env\python.exe" ".\ProjectA\src\main.py"
+echo [INFO] 終了しました。
+pause
