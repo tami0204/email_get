@@ -18,6 +18,7 @@ from email.utils import parseaddr
 from   Decode import DecodeProc
 from   GetDataFromTo import GetDataFromToProc
 
+
 class PpapProcessor:
      def __init__(self, save_folder):
         # フォルダパスの設定
@@ -82,6 +83,7 @@ class PpapProcessor:
         self.start_str=filter[1]
         self.end_str=filter[2]
 
+
     #======================================================================================#
     #  処理対象のメールを抽出
     #======================================================================================#
@@ -95,6 +97,7 @@ class PpapProcessor:
         #---class 戻り値を使用 self.filter_str
         #self.filter_str = f"[ReceivedTime] >= '{self.start_str}' AND [ReceivedTime] <= '{self.end_str}'"
         self.filter_str =self.filter_str
+
 
         messages = inbox.Items.Restrict(self.filter_str)
         messages.Sort("[ReceivedTime]", False)
