@@ -1,6 +1,7 @@
 ﻿from ast import Continue, Return
 from operator import truediv
 import os
+import sys
 import re
 #from socket import send_fds
 from typing import Self
@@ -16,10 +17,25 @@ import csv
 from email.utils import parseaddr
 from pathlib import Path
 #class
+sys.path.append(os.path.dirname(__file__))    #<--own dir get fixed
+
 from   Decode import DecodeProc
 from   GetDataFromTo import GetDataFromToProc
+#-------------------------------------------------------------------------------------
 class PpapProcessor:
-     def __init__(self, save_folder):
+#-------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------
+#  コンストラクタ
+#-------------------------------------------------------------------------------------
+     #def __init__(self, save_folder):
+     def __init__(self):
+        #格納先フォルダ作成（単体用と同様）
+        base_path = os.path.join(Path.home(), "Desktop", "ai_ocr", "メール")
+        current_time_str = datetime.now().strftime("%Y%m%d_%H%M")
+        dated_path = os.path.join(base_path, current_time_str)
+        os.makedirs(dated_path, exist_ok=True)
+        save_folder=dated_path   #外へ出した、もとは processor = PpapProcessor(save_folder=dated_path)
+
         # フォルダパスの設定
         self.save_folder = save_folder
         self.pdf_unlocked_folder = os.path.join(save_folder, "解除済")
@@ -290,7 +306,7 @@ class PpapProcessor:
                 else:
                    self.failed_extractions.append({"filename": self.filename, "received": self.received})
 
-      #======================================================================================#
+    #======================================================================================#
     #  添付ファイルの請求書がＺＩＰの場合＿ＰＰＡＰ等パスワードが書いてあるメールを特定
     #======================================================================================#
      def _find_best_password(self, sender, received_time, real_sender):
@@ -516,14 +532,14 @@ class PpapProcessor:
                     else:
                         print(f"スキップ: {dest_path} はすでに存在します。")
 
-# --- メイン処理の開始 ---
-if __name__ == '__main__':
-    home_dir = Path.home()
-    base_path = os.path.join(Path.home(), "Desktop", "ai_ocr", "メール")
-    current_time_str = datetime.now().strftime("%Y%m%d_%H%M")
-    dated_path = os.path.join(base_path, current_time_str)
-    os.makedirs(dated_path, exist_ok=True)
+# --- メイン処理の開始　単体用 ---
+#if __name__ == '__main__':
+# home_dir = Path.home()
+# base_path = os.path.join(Path.home(), "Desktop", "ai_ocr", "メール")
+# current_time_str = datetime.now().strftime("%Y%m%d_%H%M")
+# dated_path = os.path.join(base_path, current_time_str)
+# os.makedirs(dated_path, exist_ok=True)
+# # 処理開始
+# processor = PpapProcessor(save_folder=dated_path)
+# processor.run()
 
-    # 処理開始
-    processor = PpapProcessor(save_folder=dated_path)
-    processor.run()
